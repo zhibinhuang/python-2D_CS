@@ -1,0 +1,29 @@
+import os
+class Config(object):
+        WHITE = (255, 255, 255)
+        RED = (180,0,0)
+        BLUE = (62,186,238)
+        GREEN = (0,180,0)
+        BRIGHT_GREEN = (0,255,0)
+        BRIGHT_RED = (255,0,0)
+        FPS = 20 # frames per second setting
+        PATH = os.path.join(os.path.dirname(__file__))
+        BackGroundImage = PATH+'/images/BACK.png'
+        TitleImage = PATH+'/images/Title.png'
+        BlockImage = PATH+'/images/block.png'
+        BlockFloat = 500 #磚塊起始點 Y軸座標
+        SHOOTRATE = [200]#MS
+        MOVESPEED = [5]
+        DAMAGE = [10]
+        SOUND = ['Gun1.wav']
+        FIREACTION = [4]
+        RELOADACTION = [8]
+        MAGAZINE = [12]
+        AMMO = ['9mm']
+        FireAction = [3]
+        ReloadAction = [8]
+        AutoFire = [False]
+        AimCursorImage = PATH+'/images/cursor_aim.png'
+        Font = PATH+'/fonts/DFT_B3.ttc'
+        GameBGM = PATH+'/musices/bgm.mp3'
+        VERSION = "Ver 2.0"
