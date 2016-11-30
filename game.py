@@ -109,11 +109,25 @@ def gameStart():
     pygame.mixer.music.play(-1,0.0)
     PLAYER = Unit(0,Config.BlockFloat-12,0,True)
     BlackGroundImage = pygame.image.load(Config.BackGroundImage)
-    BULLETS = pygame.sprite.Group()
+    BG_rect = BlackGroundImage.get_rect()
     Enemy = Unit(300,Config.BlockFloat-12,0,False)
     Enemy.direction = True
     Enemy.defense_actioning = True
     ENEMYS.append(Enemy)
+    entities = pygame.sprite.Group()
+    platforms = []
+    last_block = random.randrange(0,5)
+    block_num = 1000
+    for i in range(0,block_num,1):
+        last_block = last_block + random.randrange(-1,2)
+        if last_block > 5:
+            last_block = 5
+        elif last_block < 0:
+            last_block = 0
+        p = Platform(i*32, 500 - last_block*14)
+        platforms.append(p)
+        entities.add(p)
+    camera = Camera(BG_rect[2],BG_rect[3], block_num*32, BG_rect[3])
     while True:
 	#偵測是否關閉
         for event in pygame.event.get():
@@ -134,7 +148,7 @@ def gameStart():
         if click[0] == 1:
             bullet = PLAYER.Fire(mouse)
             if bullet != False:
-                BULLETS.add(bullet)
+                entities.add(bullet)
         else:
             PLAYER.FireBreak()
 	#角色操作
@@ -150,15 +164,18 @@ def gameStart():
                 PLAYER.defense_actioning = True
         else:
             PLAYER.defense_actioning = False
-        BULLETS.update()
-        BULLETS.draw(DISPLAYSURF)
+        camera.update(PLAYER)
+        
+        for e in entities:
+            e.update()
+            DISPLAYSURF.blit(e.image, camera.apply(e))
 	#角色更新
-        PLAYER.update(BlackGroundImage.get_rect())
+        PLAYER.update(camera,entities)
+        PLAYER.draw(DISPLAYSURF,camera)
         #敵人更新
         for i, enemy in enumerate(ENEMYS, start=0):
-            enemy.collision(BULLETS)
-            enemy.update(BlackGroundImage.get_rect())
-            enemy.draw(DISPLAYSURF)
+            enemy.update(camera,entities)
+            enemy.draw(DISPLAYSURF,camera)
         #玩家彈匣描繪
         for i in range(0,PLAYER.magazine,1):
             DISPLAYSURF.blit(pygame.image.load(Config.PATH+'/images/ammo/' + Config.AMMO[PLAYER.weapon]+'.png'), (200 + 9*i, 550))
@@ -168,7 +185,7 @@ def gameStart():
         TextRect.x = 0
         TextRect.y = 550
         DISPLAYSURF.blit(TextSurf, TextRect)
-        PLAYER.draw(DISPLAYSURF)
+        
         pygame.display.update()
         fpsClock.tick(Config.FPS)
 if __name__ == '__main__':

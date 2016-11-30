@@ -9,7 +9,7 @@ class Config(object):
         FPS = 20 # frames per second setting
         PATH = os.path.join(os.path.dirname(__file__))
         BackGroundImage = PATH+'/images/BACK.png'
-        TitleImage = PATH+'/images/Title.png'
+        TitleImage = PATH+'\images\Title.png'
         BlockImage = PATH+'/images/block.png'
         BlockFloat = 500 #磚塊起始點 Y軸座標
         SHOOTRATE = [200]#MS
