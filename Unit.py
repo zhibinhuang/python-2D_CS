@@ -161,7 +161,6 @@ class Unit(object):
         self.FireBreaked = True
     def Fire(self,TargetPosition):
         ticks = pygame.time.get_ticks()
-<<<<<<< HEAD
         if self.hp > 0:
             if self.magazine > 0:
                 if ticks > self.lastFire + self.shootRate and self.FireBreaked and self.reload_actioned and not self.defense_actioning:
@@ -177,22 +176,6 @@ class Unit(object):
                     return Bullet(self.weapon,self.getShootPosition(),self.rect_adj,TargetPosition)
             else:
                 self.Reload()
-=======
-        if self.magazine > 0:
-            if ticks > self.lastFire + self.shootRate and self.FireBreaked and self.reload_actioned and not self.defense_actioning:
-                self.magazine -= 1
-                self.fire_actioned = False
-                pygame.mixer.Sound(Config.PATH + self.weapon.FireSound).play()
-                self.lastFire = ticks
-                postion = self.Body.position
-                self.Body.load("images/Fire.png", 19, 20, 5)
-                self.Body.position = postion
-                if not self.AutoFire:
-                    self.FireBreaked = False
-                return Bullet(self.weapon,self.getShootPosition(),self.rect_adj,TargetPosition)
-        else:
-            self.Reload()
->>>>>>> origin/master
         return False
     def fireUpdate(self):        
         self.Body.frame += 1
