@@ -65,8 +65,8 @@ class Bullet(MySprite):
 class Shield(MySprite):
     def __init__(self):
         MySprite.__init__(self) #extend the base Sprite class
-        self.image = pygame.Surface((4, 30))
-        pygame.draw.rect(self.image, Config.BLUE, (0, 0, 4, 30))
+        self.image = pygame.Surface((5, 30))
+        pygame.draw.rect(self.image, Config.BLUE, (0, 0, 5, 30))
         self.rect = self.image.get_rect()
     def update(self):
         pass
@@ -114,19 +114,14 @@ class Unit(object):
         #部位
         self.Foot = MySprite()
         self.Foot.load("images/Foot.png", 17, 12, 4)
-        self.Foot.position = x, y
         self.Foot.direction = self.direction
         self.Body = MySprite()
         self.Body.load("images/Fire.png", 19, 20, 5)
-        self.Body.position = x+4, y-20
         self.Body.direction = self.direction
         self.DefenseBody = MySprite()
         self.DefenseBody.load('images/defense.png', 40, 35, 6)
-        self.DefenseBody.position = x, y-23
         self.DefenseBody.direction = self.direction
         self.Shield = Shield()
-        self.Shield.position = x+25 , y-19
-        self.BodyGroup = pygame.sprite.Group()
     def MoveRight(self):
         if not self.defense_actioning:
             self.xVel += self.move_speed
@@ -144,9 +139,9 @@ class Unit(object):
             self.xVel -= self.move_speed
             #腳
             if self.direction:
-                self.Foot.frame -= 1
-            else:
                 self.Foot.frame += 1
+            else:
+                self.Foot.frame -= 1
             self.Foot.X -= self.move_speed
             if self.Foot.frame > self.Foot.last_frame:
                 self.Foot.frame = self.Foot.first_frame
@@ -161,22 +156,25 @@ class Unit(object):
         if not self.direction:
             return [self.rect.x + 20,self.rect.y-7]
         else:
-            return [self.rect.x,self.rect.y-7]
+            return [self.rect.x - 10,self.rect.y-7]
     def FireBreak(self):
         self.FireBreaked = True
     def Fire(self,TargetPosition):
         ticks = pygame.time.get_ticks()
-        if self.magazine > 0 and ticks > self.lastFire + self.shootRate and self.FireBreaked and self.reload_actioned and not self.defense_actioning:
-            self.magazine -= 1
-            self.fire_actioned = False
-            pygame.mixer.Sound(Config.PATH + self.weapon.FireSound).play()
-            self.lastFire = ticks
-            postion = self.Body.position
-            self.Body.load("images/Fire.png", 19, 20, 5)
-            self.Body.position = postion
-            if not self.AutoFire:
-                self.FireBreaked = False
-            return Bullet(self.weapon,self.getShootPosition(),self.rect_adj,TargetPosition)
+        if self.magazine > 0:
+            if ticks > self.lastFire + self.shootRate and self.FireBreaked and self.reload_actioned and not self.defense_actioning:
+                self.magazine -= 1
+                self.fire_actioned = False
+                pygame.mixer.Sound(Config.PATH + self.weapon.FireSound).play()
+                self.lastFire = ticks
+                postion = self.Body.position
+                self.Body.load("images/Fire.png", 19, 20, 5)
+                self.Body.position = postion
+                if not self.AutoFire:
+                    self.FireBreaked = False
+                return Bullet(self.weapon,self.getShootPosition(),self.rect_adj,TargetPosition)
+        else:
+            self.Reload()
         return False
     def fireUpdate(self):        
         self.Body.frame += 1
@@ -231,7 +229,7 @@ class Unit(object):
             elif self.Foot.frame < self.Foot.first_frame:
                 self.Foot.frame = self.Foot.last_frame
             if self.direction:
-                self.Foot.X = self.rect.x + 6
+                self.Foot.X = self.rect.x
             else:
                 self.Foot.X = self.rect.x - 4
             self.Foot.Y = self.rect.y
@@ -243,12 +241,13 @@ class Unit(object):
                     self.DefenseBody.frame = self.DefenseBody.first_frame
                 elif self.DefenseBody.frame < self.DefenseBody.first_frame:
                     self.DefenseBody.frame = self.DefenseBody.last_frame
-                self.DefenseBody.X = self.rect.x - 8
-                self.DefenseBody.Y = self.rect.y - 23
                 if self.direction:
-                    self.Shield.X = self.rect.x - 6
+                    self.DefenseBody.X = self.rect.x - 14
+                    self.Shield.X = self.rect.x - 7
                 else:
-                    self.Shield.X = self.rect.x + 19
+                    self.DefenseBody.X = self.rect.x - 10
+                    self.Shield.X = self.rect.x + 20
+                self.DefenseBody.Y = self.rect.y - 23
                 self.Shield.Y = self.rect.y - 19
                 self.defenseUpdaet()
             else:
@@ -262,7 +261,10 @@ class Unit(object):
                     self.reloadUpdate()
                 elif not self.fire_actioned:
                     self.fireUpdate()
-            self.Body.X = self.rect.x
+            if self.direction:
+                self.Body.X = self.rect.x - 6
+            else:
+                self.Body.X = self.rect.x            
             self.Body.Y = self.rect.y - 20
     def draw(self,screen,camera):
         if not self.defense_actioning and not self.defense_hold:
