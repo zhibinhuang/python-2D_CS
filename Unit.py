@@ -220,7 +220,7 @@ class Unit(object):
         self.collisionBlock(entities)
         self.collisionBullet(bullet)
         self.rect_adj = camera.apply(self)
-        if self.hp >= 0:
+        if self.hp > 0:
             #腳
             self.Foot.first_frame = self.weapon.ID * self.Foot.columns
             self.Foot.last_frame = self.Foot.first_frame + self.Foot.columns - 1
@@ -266,20 +266,30 @@ class Unit(object):
             else:
                 self.Body.X = self.rect.x            
             self.Body.Y = self.rect.y - 20
-    def draw(self,screen,camera):
-        if not self.defense_actioning and not self.defense_hold:
-            self.Foot.update()
-            self.Body.update()
-            screen.blit(self.Foot.image, camera.apply(self.Foot))
-            screen.blit(self.Body.image, camera.apply(self.Body))
         else:
-            self.DefenseBody.update()
-            screen.blit(self.DefenseBody.image, camera.apply(self.DefenseBody))
+            self.Foot.load('images/Die.png',40,35,7)
+            self.Foot.frame += 1
+            if self.Foot.frame > self.Foot.last_frame:
+                self.Foot.frame = self.Foot.last_frame
+            self.Foot.X = self.rect.x - 3
+            self.Foot.Y = self.rect.y - 23
+    def draw(self,screen,camera):        
         if self.hp > 0:
+            if not self.defense_actioning and not self.defense_hold:
+                self.Foot.update()
+                self.Body.update()
+                screen.blit(self.Foot.image, camera.apply(self.Foot))
+                screen.blit(self.Body.image, camera.apply(self.Body))
+            else:
+                self.DefenseBody.update()
+                screen.blit(self.DefenseBody.image, camera.apply(self.DefenseBody))
             #血框
             pygame.draw.rect(screen, Config.WHITE, (int(camera.apply(self).x - 8), int(camera.apply(self).y - 29),40,5),1)
             #血條
             pygame.draw.rect(screen, Config.RED, (int(camera.apply(self).x - 7), int(camera.apply(self).y - 28),int(38*(self.hp/100)),3),0)
+        else:
+            self.Foot.update()
+            screen.blit(self.Foot.image, camera.apply(self.Foot))
     def collisionBlock(self,target):
         onFloat = False
         #移動碰撞
