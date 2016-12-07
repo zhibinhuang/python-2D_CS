@@ -3,6 +3,42 @@ import math
 from Config import *
 from Unit import *
 from System import *
+def AI(ENEMYS,PLAYER,BULLETS):
+    for bot in ENEMYS:
+        if PLAYER.rect.x>bot.rect.x:
+            bot.direction = False
+        else:
+            bot.direction = True
+        bot.lastAction+=1
+        if bot.hp<=0:
+            if bot.lastAction==bot.actionRate:
+                ENEMYS.remove(bot)
+                break
+        else:
+            if bot.action==1:
+                bot.lastAction+=10
+                if bot.magazine > 0:
+                    bot.FireBreak()#不知道autofire要怎麼用?
+                    bullet=bot.Fire((PLAYER.rect.x,PLAYER.rect.y))
+                    if bullet != False:
+                        BULLETS.add(bullet)	
+                    else:
+                        bot.Reload()
+            elif bot.action==2:
+                bot.lastAction+=1
+                if(bot.direction):
+                    bot.MoveLeft()
+                else:
+                    bot.MoveRight()
+            if bot.lastAction >= bot.actionRate:#決定行為
+                bot.lastAction=0
+                i=random.randint(0,100)
+                if i<40:
+                    bot.action=1
+                elif i<80:
+                    bot.action=2
+                else:
+                    bot.action=0
 def getHightRank():
     file = open(PATH+"/rank.txt", 'r', encoding='UTF-8')
     HightRank = int(file.readline())
@@ -61,13 +97,9 @@ def gameStart():
     PAUSE = False
     pygame.mixer.music.load(Config.GameBGM)
     pygame.mixer.music.play(-1,0.0)
-    PLAYER = Unit(0,Config.BlockFloat-12,Pistol(),True)
+    PLAYER = Unit(0,Config.BlockFloat-12,Pistol())
     BlackGroundImage = pygame.image.load(Config.BackGroundImage)
     BG_rect = BlackGroundImage.get_rect()
-    Enemy = Unit(300,Config.BlockFloat-12,Pistol(),False)
-    Enemy.direction = True
-    Enemy.defense_actioning = True
-    ENEMYS.append(Enemy)
     entities = pygame.sprite.Group()
     BULLETS = pygame.sprite.Group()
     last_block = random.randrange(1,6)
@@ -113,11 +145,19 @@ def gameStart():
             PLAYER.MoveRight()
         if pressed[pygame.K_r]:
             PLAYER.Reload()
+        if pressed[pygame.K_SPACE]:
+            grenade = PLAYER.ThrowGrenade(mouse)
+            if grenade != False:
+                BULLETS.add(grenade)
         if pressed[pygame.K_s]:
             if PLAYER.reload_actioned and PLAYER.fire_actioned:
                 PLAYER.defense_actioning = True
         else:
             PLAYER.defense_actioning = False
+        if (random.randint(0,100)<5 and len(ENEMYS)<15):
+            enemy = Enemy(PLAYER.rect.x+800,Config.BlockFloat-12,Pistol())
+            ENEMYS.append(enemy)
+        AI(ENEMYS,PLAYER,BULLETS)
         camera.update(PLAYER)
         for e in entities:
             e.update(BULLETS)

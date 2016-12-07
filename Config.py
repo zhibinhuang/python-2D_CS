@@ -6,6 +6,7 @@ class Config(object):
         GREEN = (0,180,0)
         BRIGHT_GREEN = (0,255,0)
         BRIGHT_RED = (255,0,0)
+        Gspeed = 0.2
         FPS = 20 # frames per second setting
         PATH = os.path.join(os.path.dirname(__file__))
         BackGroundImage = PATH+'/images/BACK.png'
