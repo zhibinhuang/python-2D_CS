@@ -1,4 +1,4 @@
-import pygame,math
+import pygame,math,random
 from Config import *
 #動畫部位
 class MySprite(pygame.sprite.Sprite):
@@ -42,20 +42,26 @@ class MySprite(pygame.sprite.Sprite):
             rect = pygame.Rect(frame_x, frame_y, self.frame_width, self.frame_height)
             self.image =  pygame.transform.flip(self.master_image.subsurface(rect), self.direction,False) 
 class Bullet(MySprite):
-    def __init__(self,weapon,postion,postion_adj,move,Side):
+    def __init__(self,Side,postion,postion_adj=None,weapon=None,move=None,image=None):
         MySprite.__init__(self) #extend the base Sprite class
-        self.damage = weapon.Damage
-        x_distance = postion_adj[0]-move[0]
-        y_distance = postion_adj[1]-move[1]
-        distance = math.sqrt(math.pow(x_distance,2) + math.pow(y_distance,2))
-        self.speed = (x_distance/distance*weapon.BulletSpeed,y_distance/distance*weapon.BulletSpeed)
-        self.image = pygame.Surface((4, 4))
-        pygame.draw.circle(self.image, Config.BLUE, (2, 2), 2, 0)
+        if postion_adj != None and move != None:
+            x_distance = postion_adj[0]-move[0]
+            y_distance = postion_adj[1]-move[1]
+            distance = math.sqrt(math.pow(x_distance,2) + math.pow(y_distance,2))
+            if weapon != None:
+                self.speed = (x_distance/distance*weapon.BulletSpeed,y_distance/distance*weapon.BulletSpeed)
+        if image == None:
+            self.image = pygame.Surface((4, 4))
+            pygame.draw.circle(self.image, Config.BLUE, (2, 2), 2, 0)
+        else:
+            self.image = image
         self.rect = self.image.get_rect()
+        if weapon != None:
+            self.damage = weapon.Damage    
+            self.limit_dis = weapon.LimitRange
         self.postion = postion
         self.rect.center = postion
         self.old_pos = [postion[0],postion[1]]
-        self.limit_dis = weapon.LimitRange
         self.Type = "Bullet"
         self.Side = Side
     def update(self):
@@ -91,6 +97,24 @@ class Grenade(MySprite):
             self.postion[0] -= self.speed[0]
             self.postion[1] -= self.speed[1]
             self.rect.center = self.postion
+    def addScrap(self,angle,d):
+        LimitRange = 50
+        BulletSpeed = 2
+        Damage = 50
+        x = math.cos(abs(angle/180)*math.pi)*BulletSpeed*d*4
+        y = math.sin(abs(angle/180)*math.pi)*BulletSpeed
+        b = Bullet(self.Side,self.postion)
+        b.limit_dis = LimitRange
+        b.damage = Damage
+        b.speed = [x,y]
+        return b
+    def Fire(self,bullet):
+        ScrapNum = 5
+        angle = 15
+        for i in range(0,ScrapNum,1):
+            bullet.add(self.addScrap(15+i*10,1))
+        for i in range(0,ScrapNum,1):
+            bullet.add(self.addScrap(15+i*10,-1)) 
 class Shield(MySprite):
     def __init__(self):
         MySprite.__init__(self) #extend the base Sprite class
@@ -105,20 +129,20 @@ class Platform(MySprite):
         self.image = pygame.image.load(Config.BlockImage)
         self.rect = self.image.get_rect()
         self.rect.topleft = (x,y)
-    def update(self,entities):
+    def update(self,bullets):
         attacker = None
-        attacker = pygame.sprite.spritecollideany(self, entities)
+        attacker = pygame.sprite.spritecollideany(self, bullets)
         if attacker != None:
             if attacker.Type == "Bullet":
-                entities.remove(attacker)
+                bullets.remove(attacker)
             else:
                 if not attacker.onFloat:
                     attacker.onFloat = True
                     attacker.reciprocal_time = pygame.time.get_ticks()
+                    attacker.rect.bottom = self.rect.top + 1
                 elif attacker.overFire:
-                    print("Fire")
-                    entities.remove(attacker)
-                    pass
+                    attacker.Fire(bullets)
+                    bullets.remove(attacker)
 class Unit(object):
     def __init__(self,x,y,weapon):
         self.direction = False #False 面右
@@ -196,6 +220,7 @@ class Unit(object):
     def FireBreak(self):
         self.FireBreaked = True
     def Fire(self,TargetPosition):
+        
         ticks = pygame.time.get_ticks()
         if self.hp > 0:
             if self.magazine > 0:
@@ -204,10 +229,10 @@ class Unit(object):
                     self.fire_actioned = False
                     pygame.mixer.Sound(Config.PATH + self.weapon.FireSound).play()
                     self.lastFire = ticks
-                    
                     if not self.AutoFire:
                         self.FireBreaked = False
-                    return Bullet(self.weapon,self.getShootPosition(),self.rect_adj,TargetPosition,self.Side)
+                        #self,Side,postion,postion_adj=None,weapon=None,move=None,image=None
+                    return Bullet(self.Side,self.getShootPosition(),self.rect_adj,self.weapon,TargetPosition)
             else:
                 self.Reload()
         return False
@@ -373,30 +398,31 @@ class Unit(object):
         if not onFloat:
             self.rect.y += Config.BlockHeight
     def collisionBullet(self,target):
-        #盾牌碰撞
-        if self.defense_actioning or self.defense_hold:
+        if self.hp > 0:
+            #盾牌碰撞
+            if self.defense_actioning or self.defense_hold:
+                attacker = None
+                attacker = pygame.sprite.spritecollideany(self.Shield, target)
+                if attacker != None:
+                    #self.hp -= attacker.damage
+                    pygame.mixer.Sound(Config.PATH+'/musices/defense.wav').play()
+                    target.remove(attacker)
+            #腿部碰撞
             attacker = None
-            attacker = pygame.sprite.spritecollideany(self.Shield, target)
+            attacker = pygame.sprite.spritecollideany(self.Foot, target)
             if attacker != None:
-                #self.hp -= attacker.damage
-                pygame.mixer.Sound(Config.PATH+'/musices/defense.wav').play()
-                target.remove(attacker)
-        #腿部碰撞
-        attacker = None
-        attacker = pygame.sprite.spritecollideany(self.Foot, target)
-        if attacker != None:
-            if attacker.Side != self.Side:
-                self.hp -= attacker.damage
-                pygame.mixer.Sound(Config.PATH+'/musices/Hit.wav').play()
-                target.remove(attacker)
-        #身體碰撞
-        attacker = None
-        attacker = pygame.sprite.spritecollideany(self.Body, target)
-        if attacker != None:
-            if attacker.Side != self.Side:
-                self.hp -= attacker.damage
-                pygame.mixer.Sound(Config.PATH+'/musices/Hit.wav').play()
-                target.remove(attacker)
+                if attacker.Side != self.Side and attacker.Type == "Bullet":
+                    self.hp -= attacker.damage
+                    pygame.mixer.Sound(Config.PATH+'/musices/Hit.wav').play()
+                    target.remove(attacker)
+            #身體碰撞
+            attacker = None
+            attacker = pygame.sprite.spritecollideany(self.Body, target)
+            if attacker != None:
+                if attacker.Side != self.Side and attacker.Type == "Bullet":
+                    self.hp -= attacker.damage
+                    pygame.mixer.Sound(Config.PATH+'/musices/Hit.wav').play()
+                    target.remove(attacker)
 class Enemy(Unit):
     def __init__(self,x,y,weapon):
         #勢力參數

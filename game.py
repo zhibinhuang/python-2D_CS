@@ -155,13 +155,13 @@ def gameStart():
         else:
             PLAYER.defense_actioning = False
         #新增敵人
-        #'''
+        '''
         if (random.randint(0,100)<5 and len(ENEMYS)<15):
             enemy = Enemy(PLAYER.rect.x+800,Config.BlockFloat-12,Pistol())
             ENEMYS.append(enemy)
-        #'''
+        '''
         #AI
-        AI(ENEMYS,PLAYER,BULLETS)
+        #AI(ENEMYS,PLAYER,BULLETS)
         camera.update(PLAYER)
         for e in entities:
             e.update(BULLETS)
