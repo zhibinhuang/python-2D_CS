@@ -42,7 +42,7 @@ class MySprite(pygame.sprite.Sprite):
             rect = pygame.Rect(frame_x, frame_y, self.frame_width, self.frame_height)
             self.image =  pygame.transform.flip(self.master_image.subsurface(rect), self.direction,False) 
 class Bullet(MySprite):
-    def __init__(self,weapon,postion,postion_adj,move):
+    def __init__(self,weapon,postion,postion_adj,move,Side):
         MySprite.__init__(self) #extend the base Sprite class
         self.damage = weapon.Damage
         x_distance = postion_adj[0]-move[0]
@@ -57,6 +57,7 @@ class Bullet(MySprite):
         self.old_pos = [postion[0],postion[1]]
         self.limit_dis = weapon.LimitRange
         self.Type = "Bullet"
+        self.Side = Side
     def update(self):
         self.postion[0] -= self.speed[0]
         self.postion[1] -= self.speed[1]
@@ -64,7 +65,7 @@ class Bullet(MySprite):
         if math.sqrt(math.pow(self.position[0]-self.old_pos[0],2)+math.pow(self.position[1]-self.old_pos[1],2))>=self.limit_dis:
             self.kill()
 class Grenade(MySprite):
-    def __init__(self,postion,postion_adj,move):
+    def __init__(self,postion,postion_adj,move,Side):
         MySprite.__init__(self) #extend the base Sprite class
         self.damage = 100
         x_distance = postion_adj[0]-move[0]
@@ -80,6 +81,7 @@ class Grenade(MySprite):
         self.reciprocal_time = 0
         self.overFire = False
         self.onFloat = False
+        self.Side = Side
     def update(self):
         if self.onFloat:
             if pygame.time.get_ticks() > self.reciprocal_time + self.reciprocal:
@@ -147,13 +149,13 @@ class Unit(object):
         self.yVel = 0 #加速度
         #部位
         self.Foot = MySprite()
-        self.Foot.load("images/Foot.png", 17, 12, 4)
+        self.Foot.load(self.FootFrame, 17, 12, 4)
         self.Foot.direction = self.direction
         self.Body = MySprite()
-        self.Body.load("images/Fire.png", 19, 20, 5)
+        self.Body.load(self.FireFrame, 19, 20, 5)
         self.Body.direction = self.direction
         self.DefenseBody = MySprite()
-        self.DefenseBody.load('images/defense.png', 40, 35, 6)
+        self.DefenseBody.load(self.DefenseFrame, 40, 35, 6)
         self.DefenseBody.direction = self.direction
         self.Shield = Shield()
     def MoveRight(self):
@@ -205,7 +207,7 @@ class Unit(object):
                     
                     if not self.AutoFire:
                         self.FireBreaked = False
-                    return Bullet(self.weapon,self.getShootPosition(),self.rect_adj,TargetPosition)
+                    return Bullet(self.weapon,self.getShootPosition(),self.rect_adj,TargetPosition,self.Side)
             else:
                 self.Reload()
         return False
@@ -219,7 +221,7 @@ class Unit(object):
             self.reload_actioned = False
             self.reloadMid = False
             postion = self.Body.position
-            self.Body.load("images/Reload.png", 19, 20, 5)
+            self.Body.load(self.ReloadFrame, 19, 20, 5)
             self.Body.position = postion
             pygame.mixer.Sound(Config.PATH + self.weapon.ReloadSound).play()
     def reloadUpdate(self):
@@ -235,7 +237,7 @@ class Unit(object):
             pygame.mixer.Sound(Config.PATH + self.weapon.ReloadSound).play()
             self.magazine = self.weapon.Magazine #彈匣量
             self.reload_actioned = True
-            self.Body.load("images/Fire.png", 19, 20, 5)
+            self.Body.load(self.FireFrame, 19, 20, 5)
             self.Body.first_frame = self.weapon.ID * self.Body.columns
             self.Body.last_frame = self.Body.first_frame + self.Body.columns - 1
             self.Body.frame = self.Body.first_frame
@@ -255,15 +257,15 @@ class Unit(object):
             if ticks > self.ThrowFire + 500 and self.reload_actioned and self.fire_actioned and not self.defense_actioning:
                 self.ThrowFire = ticks
                 self.Throwing = True
-                self.Body.load("images/Throw.png", 19, 20, 5)
+                self.Body.load(self.ThrowFrame, 19, 20, 5)
                 self.Body.frame = 0
-                return Grenade(self.getShootPosition(),self.rect_adj,TargetPosition)
+                return Grenade(self.getShootPosition(),self.rect_adj,TargetPosition,self.Side)
         return False
     def throwUpdate(self):        
         self.Body.frame += 1
         if self.Body.frame > self.Body.last_frame:
             self.Throwing = False
-            self.Body.load("images/Fire.png", 19, 20, 5)
+            self.Body.load(self.FireFrame, 19, 20, 5)
             self.Body.first_frame = self.weapon.ID * self.Body.columns
             self.Body.last_frame = self.Body.first_frame + self.Body.columns - 1
             self.Body.frame = self.Body.first_frame
@@ -329,7 +331,7 @@ class Unit(object):
                     self.Body.X = self.rect.x            
             self.Body.Y = self.rect.y - 20
         else:
-            self.Foot.load('images/Die.png',40,35,7)
+            self.Foot.load(self.DieFrame,40,35,7)
             self.Foot.frame += 1
             if self.Foot.frame > self.Foot.last_frame:
                 self.Foot.frame = self.Foot.last_frame
@@ -383,20 +385,45 @@ class Unit(object):
         attacker = None
         attacker = pygame.sprite.spritecollideany(self.Foot, target)
         if attacker != None:
-            self.hp -= attacker.damage
-            pygame.mixer.Sound(Config.PATH+'/musices/Hit.wav').play()
-            target.remove(attacker)
+            if attacker.Side != self.Side:
+                self.hp -= attacker.damage
+                pygame.mixer.Sound(Config.PATH+'/musices/Hit.wav').play()
+                target.remove(attacker)
         #身體碰撞
         attacker = None
         attacker = pygame.sprite.spritecollideany(self.Body, target)
         if attacker != None:
-            self.hp -= attacker.damage
-            pygame.mixer.Sound(Config.PATH+'/musices/Hit.wav').play()
-            target.remove(attacker)
+            if attacker.Side != self.Side:
+                self.hp -= attacker.damage
+                pygame.mixer.Sound(Config.PATH+'/musices/Hit.wav').play()
+                target.remove(attacker)
 class Enemy(Unit):
     def __init__(self,x,y,weapon):
-        Unit.__init__(self,x,y,weapon)
+        #勢力參數
+        self.Side = 1
         #ai動作參數
         self.action=0#0 pass 1 fire 2 move
         self.lastAction=0
         self.actionRate=30#ai動作間隔
+        #圖形
+        self.FireFrame = Config.PATH+"/images/Fire_e.png"
+        self.FootFrame = Config.PATH+"/images/Foot_e.png"
+        self.ReloadFrame = Config.PATH+"/images/Reload_e.png"
+        self.ThrowFrame = Config.PATH+"/images/Throw_e.png"
+        self.DieFrame = Config.PATH+"/images/Die_e.png"
+        self.DefenseFrame = Config.PATH+"/images/Defense_e.png"
+        #初始化
+        Unit.__init__(self,x,y,weapon)
+class Player(Unit):
+    def __init__(self,x,y,weapon):
+        #勢力參數
+        self.Side = 0
+        #圖形
+        self.FireFrame = Config.PATH+"/images/Fire.png"
+        self.FootFrame = Config.PATH+"/images/Foot.png"
+        self.ReloadFrame = Config.PATH+"/images/Reload.png"
+        self.ThrowFrame = Config.PATH+"/images/Throw.png"
+        self.DieFrame = Config.PATH+"/images/Die.png"
+        self.DefenseFrame = Config.PATH+"/images/Defense.png"
+        #初始化
+        Unit.__init__(self,x,y,weapon)
