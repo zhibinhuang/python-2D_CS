@@ -44,12 +44,20 @@ class MySprite(pygame.sprite.Sprite):
 class Bullet(MySprite):
     def __init__(self,Side,postion,postion_adj=None,weapon=None,move=None,image=None):
         MySprite.__init__(self) #extend the base Sprite class
-        if postion_adj != None and move != None:
-            x_distance = postion_adj[0]-move[0]
-            y_distance = postion_adj[1]-move[1]
-            distance = math.sqrt(math.pow(x_distance,2) + math.pow(y_distance,2))
-            if weapon != None:
-                self.speed = (x_distance/distance*weapon.BulletSpeed,y_distance/distance*weapon.BulletSpeed)
+        if postion_adj != None:
+            if move != None:
+                x_distance = postion_adj[0]-move[0]
+                y_distance = postion_adj[1]-move[1]
+                distance = math.sqrt(math.pow(x_distance,2) + math.pow(y_distance,2))
+                if weapon != None:
+                    self.speed = (x_distance/distance*weapon.BulletSpeed,y_distance/distance*weapon.BulletSpeed)
+        else:
+            if move != None:
+                x_distance = postion[0]-move[0]
+                y_distance = postion[1]-move[1]
+                distance = math.sqrt(math.pow(x_distance,2) + math.pow(y_distance,2))
+                if weapon != None:
+                    self.speed = (x_distance/distance*weapon.BulletSpeed,y_distance/distance*weapon.BulletSpeed)
         if image == None:
             self.image = pygame.Surface((4, 4))
             pygame.draw.circle(self.image, Config.BLUE, (2, 2), 2, 0)
@@ -97,12 +105,11 @@ class Grenade(MySprite):
             self.postion[0] -= self.speed[0]
             self.postion[1] -= self.speed[1]
             self.rect.center = self.postion
-    def addScrap(self,angle,d):
-        LimitRange = 50
-        BulletSpeed = 2
+    def addScrap(self,i,d):
+        LimitRange = 100
         Damage = 50
-        x = math.cos(abs(angle/180)*math.pi)*BulletSpeed*d*4
-        y = math.sin(abs(angle/180)*math.pi)*BulletSpeed
+        x = d*6
+        y = i*0.2+1
         b = Bullet(self.Side,self.postion)
         b.limit_dis = LimitRange
         b.damage = Damage
@@ -110,11 +117,11 @@ class Grenade(MySprite):
         return b
     def Fire(self,bullet):
         ScrapNum = 5
-        angle = 15
+        pygame.mixer.Sound(Config.PATH +'/musices/Grenade.wav').play()
         for i in range(0,ScrapNum,1):
-            bullet.add(self.addScrap(15+i*10,1))
+            bullet.add(self.addScrap(i,1))
         for i in range(0,ScrapNum,1):
-            bullet.add(self.addScrap(15+i*10,-1)) 
+            bullet.add(self.addScrap(i,-1)) 
 class Shield(MySprite):
     def __init__(self):
         MySprite.__init__(self) #extend the base Sprite class
@@ -220,7 +227,6 @@ class Unit(object):
     def FireBreak(self):
         self.FireBreaked = True
     def Fire(self,TargetPosition):
-        
         ticks = pygame.time.get_ticks()
         if self.hp > 0:
             if self.magazine > 0:
@@ -231,7 +237,6 @@ class Unit(object):
                     self.lastFire = ticks
                     if not self.AutoFire:
                         self.FireBreaked = False
-                        #self,Side,postion,postion_adj=None,weapon=None,move=None,image=None
                     return Bullet(self.Side,self.getShootPosition(),self.rect_adj,self.weapon,TargetPosition)
             else:
                 self.Reload()
@@ -284,6 +289,7 @@ class Unit(object):
                 self.Throwing = True
                 self.Body.load(self.ThrowFrame, 19, 20, 5)
                 self.Body.frame = 0
+                pygame.mixer.Sound(Config.PATH +'/musices/GreTh.wav').play()
                 return Grenade(self.getShootPosition(),self.rect_adj,TargetPosition,self.Side)
         return False
     def throwUpdate(self):        
@@ -440,6 +446,21 @@ class Enemy(Unit):
         self.DefenseFrame = Config.PATH+"/images/Defense_e.png"
         #初始化
         Unit.__init__(self,x,y,weapon)
+    def Fire(self,PlayerPosition):
+        ticks = pygame.time.get_ticks()
+        if self.hp > 0:
+            if self.magazine > 0:
+                if ticks > self.lastFire + self.shootRate and self.FireBreaked and self.reload_actioned and not self.defense_actioning and not self.Throwing :
+                    self.magazine -= 1
+                    self.fire_actioned = False
+                    pygame.mixer.Sound(Config.PATH + self.weapon.FireSound).play()
+                    self.lastFire = ticks
+                    if not self.AutoFire:
+                        self.FireBreaked = False
+                    return Bullet(self.Side,self.getShootPosition(),None,self.weapon,PlayerPosition)
+            else:
+                self.Reload()
+        return False
 class Player(Unit):
     def __init__(self,x,y,weapon):
         #勢力參數
