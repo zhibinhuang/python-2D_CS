@@ -30,11 +30,23 @@ class Pistol(object):
         ReloadAction = 8
         Magazine = 12
         Ammo = '/images/ammo/9MM.png'
-        FireAction = 3
-        ReloadAction = 8
         AutoFire = False
-class Grenade(object):
+class SMG(object):
         ID = 1
+        ShootRate = 200
+        MoveSpeed = 5
+        Damage = 10
+        BulletSpeed = 10
+        LimitRange = 500
+        FireSound = '/musices/Gun1.wav'
+        ReloadSound = '/musices/Reload.wav'
+        FireAction = 4
+        ReloadAction = 8
+        Magazine = 30
+        Ammo = '/images/ammo/9MM.png'
+        AutoFire = True
+class Grenade(object):
+        ID = 100
         Damage = 10
         BulletSpeed = 10
         LimitRange = 200

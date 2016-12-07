@@ -14,6 +14,7 @@ class MySprite(pygame.sprite.Sprite):
         self.last_time = 0
         self.direction = False
         self.master_image = None
+        self.Type = None
     #X property
     def _getx(self): return self.rect.x
     def _setx(self,value): self.rect.x = value
@@ -35,11 +36,14 @@ class MySprite(pygame.sprite.Sprite):
         rect = self.master_image.get_rect()
         self.last_frame = (rect.width // width) * (rect.height // height) - 1
     def update(self):
-        if self.master_image != None:
-            frame_x = (self.frame % self.columns) * self.frame_width
-            frame_y = (self.frame // self.columns) * self.frame_height
-            rect = pygame.Rect(frame_x, frame_y, self.frame_width, self.frame_height)
-            self.image =  pygame.transform.flip(self.master_image.subsurface(rect), self.direction,False) 
+        try:
+            if self.master_image != None:
+                frame_x = (self.frame % self.columns) * self.frame_width
+                frame_y = (self.frame // self.columns) * self.frame_height
+                rect = pygame.Rect(frame_x, frame_y, self.frame_width, self.frame_height)
+                self.image =  pygame.transform.flip(self.master_image.subsurface(rect), self.direction,False)
+        except:
+            print(self.Type)
 class Bullet(MySprite):
     def __init__(self,Side,ShootPostion,weapon,TargetPostion,ShootPostion_adj=None):
         MySprite.__init__(self) #extend the base Sprite class
@@ -160,7 +164,8 @@ class Unit(object):
         self.Foot.load(self.FootFrame, 17, 12, 4)
         self.Foot.direction = self.direction
         self.Body = MySprite()
-        self.Body.load(self.FireFrame, 19, 20, 5)
+        self.Body.load(self.FireFrame, 30, 20, 4)
+        self.Body.Type = "Fire"
         self.Body.direction = self.direction
         self.DefenseBody = MySprite()
         self.DefenseBody.load(self.DefenseFrame, 40, 35, 6)
@@ -203,7 +208,6 @@ class Unit(object):
             return [self.rect.x - 10,self.rect.y-7]
     def FireBreak(self):
         self.FireBreaked = True
-    
     def fireUpdate(self):        
         self.Body.frame += 1
         if self.Body.frame > self.Body.last_frame:
@@ -215,6 +219,7 @@ class Unit(object):
             self.reloadMid = False
             postion = self.Body.position
             self.Body.load(self.ReloadFrame, 19, 20, 5)
+            self.Body.Type = "Reload"
             self.Body.position = postion
             pygame.mixer.Sound(Config.PATH + self.weapon.ReloadSound).play()
     def reloadUpdate(self):
@@ -230,7 +235,8 @@ class Unit(object):
             pygame.mixer.Sound(Config.PATH + self.weapon.ReloadSound).play()
             self.magazine = self.weapon.Magazine #彈匣量
             self.reload_actioned = True
-            self.Body.load(self.FireFrame, 19, 20, 5)
+            self.Body.load(self.FireFrame, 30, 20, 4)
+            self.Body.Type = "Fire"
             self.Body.first_frame = self.weapon.ID * self.Body.columns
             self.Body.last_frame = self.Body.first_frame + self.Body.columns - 1
             self.Body.frame = self.Body.first_frame
@@ -251,6 +257,7 @@ class Unit(object):
                 self.ThrowFire = ticks
                 self.Throwing = True
                 self.Body.load(self.ThrowFrame, 19, 20, 5)
+                self.Body.Type = "Throw"
                 self.Body.frame = 0
                 pygame.mixer.Sound(Config.PATH +'/musices/GreTh.wav').play()
                 return Grenade(self.getShootPosition(),self.rect_adj,TargetPosition,self.Side)
@@ -259,7 +266,8 @@ class Unit(object):
         self.Body.frame += 1
         if self.Body.frame > self.Body.last_frame:
             self.Throwing = False
-            self.Body.load(self.FireFrame, 19, 20, 5)
+            self.Body.load(self.FireFrame, 30, 20, 4)
+            self.Body.Type = "Fire"
             self.Body.first_frame = self.weapon.ID * self.Body.columns
             self.Body.last_frame = self.Body.first_frame + self.Body.columns - 1
             self.Body.frame = self.Body.first_frame
@@ -272,8 +280,6 @@ class Unit(object):
         self.rect_adj = camera.apply(self)
         if self.hp > 0:
             #腳
-            self.Foot.first_frame = self.weapon.ID * self.Foot.columns
-            self.Foot.last_frame = self.Foot.first_frame + self.Foot.columns - 1
             if self.Foot.frame > self.Foot.last_frame:
                 self.Foot.frame = self.Foot.first_frame
             elif self.Foot.frame < self.Foot.first_frame:
@@ -313,16 +319,21 @@ class Unit(object):
                     self.fireUpdate()
                 elif self.Throwing:
                     self.throwUpdate()
-            if self.Throwing:
-                if self.direction:
-                    self.Body.X = self.rect.x
+                if self.Body.Type == "Reload":
+                    if self.direction:
+                        self.Body.X = self.rect.x - 6
+                    else:
+                        self.Body.X = self.rect.x
+                elif self.Body.Type == "Throw":
+                    if self.direction:
+                        self.Body.X = self.rect.x
+                    else:
+                        self.Body.X = self.rect.x - 5
                 else:
-                    self.Body.X = self.rect.x - 5
-            else:
-                if self.direction:
-                    self.Body.X = self.rect.x - 6
-                else:
-                    self.Body.X = self.rect.x            
+                    if self.direction:
+                        self.Body.X = self.rect.x - 16
+                    else:
+                        self.Body.X = self.rect.x
             self.Body.Y = self.rect.y - 20
         else:
             self.Foot.load(self.DieFrame,40,35,7)

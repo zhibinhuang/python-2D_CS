@@ -4,18 +4,17 @@ from Unit import *
 from System import *
 def AI(ENEMYS,PLAYER,BULLETS):
     for bot in ENEMYS:
-        if PLAYER.rect.x>bot.rect.x:
-            bot.direction = False
-        else:
-            bot.direction = True
-        bot.lastAction+=1
-        if bot.hp<=0:
-            if bot.lastAction==bot.actionRate:
-                ENEMYS.remove(bot)
-                break
-        else:
+        if  PLAYER.rect.x-bot.rect.x > 850:
+            ENEMYS.remove(bot)
+            break
+        elif bot.hp>0:
+            bot.lastAction+=1
+            if PLAYER.rect.x>bot.rect.x:
+                bot.direction = False
+            else:
+                bot.direction = True
             if bot.action==1:
-                bot.lastAction+=10
+                bot.lastAction=50
                 if bot.magazine > 0:
                     bot.FireBreak()#不知道autofire要怎麼用?
                     bullet=bot.Fire((PLAYER.rect.x,PLAYER.rect.y))
@@ -24,7 +23,7 @@ def AI(ENEMYS,PLAYER,BULLETS):
                     else:
                         bot.Reload()
             elif bot.action==2:
-                bot.lastAction+=1
+                bot.lastAction+=2
                 if(bot.direction):
                     bot.MoveLeft()
                 else:
@@ -32,9 +31,14 @@ def AI(ENEMYS,PLAYER,BULLETS):
             if bot.lastAction >= bot.actionRate:#決定行為
                 bot.lastAction=0
                 i=random.randint(0,100)
-                if i<40:
+                fire,move=0,0
+                if abs(PLAYER.rect.x-bot.rect.x)<=bot.weapon.LimitRange:
+                    fire,move=30,60
+                else:
+                    fire,move=0,40
+                if i<fire:
                     bot.action=1
-                elif i<80:
+                elif i<move:
                     bot.action=2
                 else:
                     bot.action=0
@@ -96,7 +100,7 @@ def gameStart():
     PAUSE = False
     pygame.mixer.music.load(Config.GameBGM)
     pygame.mixer.music.play(-1,0.0)
-    PLAYER = Player(0,Config.BlockFloat-12,Config.Pistol())
+    PLAYER = Player(0,Config.BlockFloat-12,Config.SMG())
     BlackGroundImage = pygame.image.load(Config.BackGroundImage)
     BG_rect = BlackGroundImage.get_rect()
     entities = pygame.sprite.Group()
@@ -154,13 +158,12 @@ def gameStart():
         else:
             PLAYER.defense_actioning = False
         #新增敵人
-        '''
-        if (random.randint(0,100)<5 and len(ENEMYS)<15):
-            enemy = Enemy(PLAYER.rect.x+800,Config.BlockFloat-12,Config.Pistol())
+        if (random.randint(0,100)<3 and len(ENEMYS)<15):
+            pos=random.choice([-600,800])
+            enemy = Enemy(PLAYER.rect.x+pos,Config.BlockFloat-12,Pistol())
             ENEMYS.append(enemy)
         #AI
         AI(ENEMYS,PLAYER,BULLETS)
-        '''
         camera.update(PLAYER)
         for e in entities:
             e.update(BULLETS)
