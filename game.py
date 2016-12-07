@@ -1,6 +1,5 @@
-import pygame, sys,random,os
+import pygame, sys,random,os,Config
 import math
-from Config import *
 from Unit import *
 from System import *
 def AI(ENEMYS,PLAYER,BULLETS):
@@ -97,7 +96,7 @@ def gameStart():
     PAUSE = False
     pygame.mixer.music.load(Config.GameBGM)
     pygame.mixer.music.play(-1,0.0)
-    PLAYER = Player(0,Config.BlockFloat-12,Pistol())
+    PLAYER = Player(0,Config.BlockFloat-12,Config.Pistol())
     BlackGroundImage = pygame.image.load(Config.BackGroundImage)
     BG_rect = BlackGroundImage.get_rect()
     entities = pygame.sprite.Group()
@@ -155,11 +154,13 @@ def gameStart():
         else:
             PLAYER.defense_actioning = False
         #新增敵人
+        '''
         if (random.randint(0,100)<5 and len(ENEMYS)<15):
-            enemy = Enemy(PLAYER.rect.x+800,Config.BlockFloat-12,Pistol())
+            enemy = Enemy(PLAYER.rect.x+800,Config.BlockFloat-12,Config.Pistol())
             ENEMYS.append(enemy)
         #AI
         AI(ENEMYS,PLAYER,BULLETS)
+        '''
         camera.update(PLAYER)
         for e in entities:
             e.update(BULLETS)
