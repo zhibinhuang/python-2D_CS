@@ -99,10 +99,10 @@ class Grenade(MySprite):
             self.postion[1] -= self.speed[1]
             self.rect.center = self.postion
     def Fire(self,bullet):
-        ScrapNum = 10
+        ScrapNum = 20
         pygame.mixer.Sound(Config.PATH +'/musices/Grenade.wav').play()
         for i in range(0,ScrapNum,1):
-            bullet.add(Bullet(self.Side,self.postion,Config.Grenade(),(self.postion[0]+random.randrange(-100,100),self.postion[1]-random.randrange(0,5))))
+            bullet.add(Bullet(self.Side,[self.rect.x,self.rect.y],Config.Grenade(),(self.rect.x+random.randrange(-100,100),self.rect.y-random.randrange(0,5))))
 class Shield(MySprite):
     def __init__(self):
         MySprite.__init__(self) #extend the base Sprite class
@@ -166,6 +166,7 @@ class Unit(object):
         self.Body = MySprite()
         self.Body.load(self.FireFrame, 30, 20, 4)
         self.Body.Type = "Fire"
+        self.Body.first_frame = self.weapon.ID * self.Body.columns
         self.Body.direction = self.direction
         self.DefenseBody = MySprite()
         self.DefenseBody.load(self.DefenseFrame, 40, 35, 6)
@@ -197,20 +198,22 @@ class Unit(object):
             elif self.Foot.frame < self.Foot.first_frame:
                 self.Foot.frame = self.Foot.last_frame
     def SeekCheck(self,x):
-        if x < self.rect_adj.x + 20:#左
-            self.direction = True
-        else:#右
-            self.direction = False
+        if self.hp > 0:
+            if x < self.rect_adj.x + 20:#左
+                self.direction = True
+            else:#右
+                self.direction = False
     def getShootPosition(self):
-        if not self.direction:
-            return [self.rect.x + 20,self.rect.y-7]
-        else:
-            return [self.rect.x - 10,self.rect.y-7]
+        if self.hp > 0:
+            if not self.direction:
+                return [self.rect.x + 20,self.rect.y-7]
+            else:
+                return [self.rect.x - 10,self.rect.y-7]
     def FireBreak(self):
         self.FireBreaked = True
     def fireUpdate(self):        
         self.Body.frame += 1
-        if self.Body.frame > self.Body.last_frame:
+        if self.Body.frame == self.Body.first_frame+self.weapon.FireAction:
             self.Body.frame = self.Body.first_frame
             self.fire_actioned = True
     def Reload(self):
@@ -218,8 +221,11 @@ class Unit(object):
             self.reload_actioned = False
             self.reloadMid = False
             postion = self.Body.position
-            self.Body.load(self.ReloadFrame, 19, 20, 5)
+            self.Body.load(self.ReloadFrame, 23, 20, 6)
             self.Body.Type = "Reload"
+            self.Body.first_frame = self.weapon.ID * self.Body.columns
+            self.Body.last_frame = self.Body.first_frame + self.Body.columns - 1
+            self.Body.frame = self.Body.first_frame
             self.Body.position = postion
             pygame.mixer.Sound(Config.PATH + self.weapon.ReloadSound).play()
     def reloadUpdate(self):
@@ -227,7 +233,7 @@ class Unit(object):
             self.Body.frame += 1
         else:
             self.Body.frame -= 1
-        if self.Body.frame > self.Body.last_frame:
+        if self.Body.frame == self.Body.first_frame+self.weapon.ReloadAction:
             if not self.reloadMid:
                 self.reloadMid = True
                 self.Body.frame -= 1
@@ -259,6 +265,7 @@ class Unit(object):
                 self.Body.load(self.ThrowFrame, 19, 20, 5)
                 self.Body.Type = "Throw"
                 self.Body.frame = 0
+                self.Body.first_frame = 0
                 pygame.mixer.Sound(Config.PATH +'/musices/GreTh.wav').play()
                 return Grenade(self.getShootPosition(),self.rect_adj,TargetPosition,self.Side)
         return False
@@ -307,12 +314,6 @@ class Unit(object):
                 self.Shield.Y = self.rect.y - 19
                 self.defenseUpdaet()
             else:
-                self.Body.first_frame = self.weapon.ID * self.Body.columns
-                self.Body.last_frame = self.Body.first_frame + self.Body.columns - 1
-                if self.Body.frame > self.Body.last_frame:
-                    self.Body.frame = self.Body.first_frame
-                elif self.Body.frame < self.Body.first_frame:
-                    self.Body.frame = self.Body.last_frame
                 if not self.reload_actioned:
                     self.reloadUpdate()
                 elif not self.fire_actioned:
@@ -321,7 +322,7 @@ class Unit(object):
                     self.throwUpdate()
                 if self.Body.Type == "Reload":
                     if self.direction:
-                        self.Body.X = self.rect.x - 6
+                        self.Body.X = self.rect.x - 9
                     else:
                         self.Body.X = self.rect.x
                 elif self.Body.Type == "Throw":

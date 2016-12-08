@@ -26,8 +26,8 @@ class Pistol(object):
         LimitRange = 500
         FireSound = '/musices/Gun1.wav'
         ReloadSound = '/musices/Reload.wav'
-        FireAction = 4
-        ReloadAction = 8
+        FireAction = 3
+        ReloadAction = 5
         Magazine = 12
         Ammo = '/images/ammo/9MM.png'
         AutoFire = False
@@ -40,14 +40,14 @@ class SMG(object):
         LimitRange = 500
         FireSound = '/musices/Gun1.wav'
         ReloadSound = '/musices/Reload.wav'
-        FireAction = 4
-        ReloadAction = 8
+        FireAction = 3
+        ReloadAction = 6
         Magazine = 30
         Ammo = '/images/ammo/9MM.png'
         AutoFire = True
 class Grenade(object):
         ID = 100
-        Damage = 10
+        Damage = 30
         BulletSpeed = 10
         LimitRange = 200
         
