@@ -112,7 +112,7 @@ class Shield(MySprite):
     def update(self):
         pass
 class Platform(MySprite):
-    def __init__(self, x, y):
+    def __init__(self, x, y,BlockImage):
         MySprite.__init__(self)
         self.image = pygame.image.load(Config.BlockImage)
         self.rect = self.image.get_rect()

@@ -1,7 +1,14 @@
-import pygame, sys,random,os,Config
-import math
+import pygame, sys,random,os,json,math
+import Config
 from Unit import *
 from System import *
+def readGameList():
+    path = "data/gameList"
+    data = []
+    for f in os.listdir(path):
+        with open(path+"/"+f) as json_data:
+            data.append(json.load(json_data))
+    return data
 def AI(ENEMYS,PLAYER,BULLETS):
     for bot in ENEMYS:
         if  PLAYER.rect.x-bot.rect.x > 850:
@@ -55,7 +62,7 @@ def titleStart():
     pygame.mixer.music.play(-1,0.0)
     StartButton = Button(320,450,DISPLAYSURF)
     StartButton.setIconWithImage(Config.PATH+'/images/Start_ic.png',Config.PATH+'/images/Start_ac.png')
-    StartButton.setAction(gameStart)
+    StartButton.setAction(gameMenu)
     EndButton = Button(320,520,DISPLAYSURF)
     EndButton.setIconWithImage(Config.PATH+'/images/End_ic.png',Config.PATH+'/images/End_ac.png')
     EndButton.setAction(quitgame)
@@ -93,20 +100,45 @@ def main():
     DISPLAYSURF = pygame.display.set_mode((TitleImage.get_rect()[2], TitleImage.get_rect()[3]), 0, 32)
     pygame.display.set_caption('2D-CS')
     titleStart()
-def gameStart():
+def gameMenu():
+    GameList = []
+    for game in readGameList():
+        newGame = gameFrame(50,50,DISPLAYSURF,game)
+        newGame.setAction(gameStart)
+        GameList.append(newGame)
+    while True:
+        for event in pygame.event.get():#偵測是否關閉
+            if event.type == 12:
+                quitgame()
+	#畫面初始化
+        DISPLAYSURF.fill(Config.BLACK)
+	#按鈕
+        for game in GameList:
+            game.update()
+	#鼠標
+        mouse = pygame.mouse.get_pos()
+        AimCursor = pygame.image.load(Config.PATH+'/images/cursor_point.png')
+        AimCursor_rect = AimCursor.get_rect()
+        AimCursor_rect.center = mouse
+        DISPLAYSURF.blit(AimCursor, AimCursor_rect)
+        pygame.display.update()
+        fpsClock.tick(Config.FPS)
+def gameStart(arg):
     BlockArray = []
     SOURCE = 0
     ENEMYS = []
     PAUSE = False
-    pygame.mixer.music.load(Config.GameBGM)
+    pygame.mixer.music.load(arg["BGM"])
     pygame.mixer.music.play(-1,0.0)
-    PLAYER = Player(0,Config.BlockFloat-12,Config.Pistol())
-    BlackGroundImage = pygame.image.load(Config.BackGroundImage)
+    PLAYER = Player(0,arg["BlockFloat"]-12,Config.Pistol())
+    BlackGroundImage = pygame.image.load(arg["BackGroundImage"])
     BG_rect = BlackGroundImage.get_rect()
     entities = pygame.sprite.Group()
     BULLETS = pygame.sprite.Group()
     last_block = random.randrange(1,6)
-    block_num = 1000
+    block_num = arg["BlockNumber"]
+    block_w = arg["BlockImageWidth"]
+    block_h = arg["BlockImageHeight"]
     for i in range(0,block_num,1):
         last_block = last_block + random.randrange(-1,2)
         if last_block > 6:
@@ -114,9 +146,9 @@ def gameStart():
         elif last_block < 1:
             last_block = 1
         for j in range(0,last_block,1):    
-            p = Platform(i*32, 500 - j*14)
+            p = Platform(i*block_w, 500 - j*block_h,arg["BlockImage"])
             entities.add(p)
-    camera = Camera(BG_rect[2],BG_rect[3], block_num*32, BG_rect[3])
+    camera = Camera(BG_rect[2],BG_rect[3], block_num*block_w, BG_rect[3])
     while True:
 	#偵測是否關閉
         for event in pygame.event.get():

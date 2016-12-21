@@ -1,4 +1,5 @@
 import os
+BLACK = (0,0,0)
 WHITE = (255, 255, 255)
 RED = (180,0,0)
 BLUE = (62,186,238)
@@ -50,4 +51,3 @@ class Grenade(object):
         Damage = 30
         BulletSpeed = 10
         LimitRange = 200
-        
