@@ -103,7 +103,7 @@ def main():
 def gameMenu():
     GameList = []
     for game in readGameList():
-        newGame = gameFrame(50,50,DISPLAYSURF,game)
+        newGame = gameFrame(50,50+160*len(GameList),DISPLAYSURF,game)
         newGame.setAction(gameStart)
         GameList.append(newGame)
     while True:
