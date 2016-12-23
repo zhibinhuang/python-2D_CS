@@ -9,7 +9,7 @@ def readGameList():
 		with open(path+"/"+f) as json_data:
 			data.append(json.load(json_data))
 	return data
-def AI(ENEMYS,PLAYER,BULLETS,SOURCE):
+def AI(ENEMYS,PLAYER,BULLETS,LEVEL,SOURCE):
 	for bot in ENEMYS:
 		if  PLAYER.rect.x-bot.rect.x > 800:
 			ENEMYS.remove(bot)
@@ -45,9 +45,9 @@ def AI(ENEMYS,PLAYER,BULLETS,SOURCE):
 				i=random.randint(0,100)
 				fire,move=0,0
 				if abs(PLAYER.rect.x-bot.rect.x)<=bot.weapon.LimitRange:
-					fire,move=30,60
+					fire,move=Config.AI[LEVEL][0],Config.AI[LEVEL][1]
 				else:
-					fire,move=0,40
+					fire,move=0,Config.AI[LEVEL][2]
 				if i<fire:
 					bot.action=1
 				elif i<move:
@@ -132,11 +132,12 @@ def gameMenu():
 def gameStart(arg):
 	BlockArray = []
 	SOURCE,TIME,DISTANCE = 0,pygame.time.get_ticks()//1000,0
+	LEVEL=0
 	ENEMYS = []
 	PAUSE = False
 	pygame.mixer.music.load(arg["BGM"])
 	pygame.mixer.music.play(-1,0.0)
-	PLAYER = Player(0,arg["BlockFloat"]-12,Config.WEAPON[1])
+	PLAYER = Player(0,arg["BlockFloat"]-12,Config.WEAPON[2])
 	BlackGroundImage = pygame.image.load(arg["BackGroundImage"])
 	BG_rect = BlackGroundImage.get_rect()
 	entities = pygame.sprite.Group()
@@ -197,11 +198,11 @@ def gameStart(arg):
 			PLAYER.defense_actioning = False
 		#新增敵人
 		if (random.randint(0,100)<3 and len(ENEMYS)<15):
-			pos,weapon=random.choice([-600,800]),random.choice([1,0])
+			pos,weapon=random.choice([-600,800]),random.choice(range(0,LEVEL+1))
 			enemy = Enemy(PLAYER.rect.x+pos,Config.BlockFloat-12,Config.WEAPON[weapon])
 			ENEMYS.append(enemy)
 		#AI
-		SOURCE=AI(ENEMYS,PLAYER,BULLETS,SOURCE)
+		SOURCE=AI(ENEMYS,PLAYER,BULLETS,LEVEL,SOURCE)
 
 		camera.update(PLAYER)
 		for e in entities:

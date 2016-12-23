@@ -54,10 +54,9 @@ class Bullet(MySprite):
 			x_distance = ShootPostion[0]-TargetPostion[0]
 			y_distance = ShootPostion[1]-TargetPostion[1]
 		self.image = pygame.Surface((4, 4))
-		pygame.draw.circle(self.image, Config.BLUE, (2, 2), 2, 0)
 		self.rect = self.image.get_rect()
 		distance = math.sqrt(math.pow(x_distance,2) + math.pow(y_distance,2))+1
-		self.speed = (x_distance/distance*weapon.BulletSpeed,y_distance/distance*weapon.BulletSpeed)
+		self.speed = [x_distance/distance*weapon.BulletSpeed,y_distance/distance*weapon.BulletSpeed]
 		self.damage = weapon.Damage    
 		self.limit_dis = weapon.LimitRange
 		self.postion = ShootPostion
@@ -65,6 +64,10 @@ class Bullet(MySprite):
 		self.old_pos = [ShootPostion[0],ShootPostion[1]]
 		self.Type = "Bullet"
 		self.Side = Side
+		if Side==0:
+			pygame.draw.circle(self.image, Config.YELLOW, (2, 2), 2, 0)
+		else:
+			pygame.draw.circle(self.image, Config.BLUE, (2, 2), 2, 0)
 	def update(self):
 		self.postion[0] -= self.speed[0]
 		self.postion[1] -= self.speed[1]
@@ -435,7 +438,16 @@ class Enemy(Unit):
 					if not self.AutoFire:
 						self.FireBreaked = False
 					#Side,ShootPostion,weapon,TargetPostion,ShootPostion_adj=None
-					return Bullet(self.Side,self.getShootPosition(),self.weapon,PlayerPosition)
+					if (type(self.weapon)==Config.Shotgun):
+						list=[]
+						for i in range(0,10):
+							pos=(PlayerPosition[0],PlayerPosition[1]+random.randint(-5,5))
+							tmp=Bullet(self.Side,self.getShootPosition(),self.weapon,pos)
+							tmp.speed=[tmp.speed[0]+random.uniform(-1,1),tmp.speed[1]+random.uniform(-1,1)]
+							list.append(tmp)
+						return list
+					else:
+						return Bullet(self.Side,self.getShootPosition(),self.weapon,PlayerPosition)
 			else:
 				self.Reload()
 		return False
@@ -464,7 +476,16 @@ class Player(Unit):
 					if not self.AutoFire:
 						self.FireBreaked = False
 					#Side,ShootPostion,weapon,TargetPostion,ShootPostion_adj=None
-					return Bullet(self.Side,self.getShootPosition(),self.weapon,TargetPosition,self.rect_adj)
+					if (type(self.weapon)==Config.Shotgun):
+						list=[]
+						for i in range(0,10):
+							pos=(TargetPosition[0],TargetPosition[1]+random.randint(-5,5))
+							tmp=Bullet(self.Side,self.getShootPosition(),self.weapon,pos,self.rect_adj)
+							tmp.speed=[tmp.speed[0]+random.uniform(-1,1),tmp.speed[1]+random.uniform(-1,1)]
+							list.append(tmp)
+						return list
+					else:
+						return Bullet(self.Side,self.getShootPosition(),self.weapon,TargetPosition,self.rect_adj)
 			else:
 				self.Reload()
 		return False
