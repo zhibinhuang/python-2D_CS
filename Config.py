@@ -19,7 +19,7 @@ AimCursorImage = PATH+'/images/cursor_aim.png'
 Font = PATH+'/fonts/DFT_B3.ttc'
 GameBGM = PATH+'/musices/bgm.mp3'
 VERSION = "Ver 3.0"
-AI=[[10,40,40],[20,60,60],[40,30,80]]
+AI=[[10,40,60],[20,60,60],[30,60,80]]
 class Pistol(object):
 		ID = 0
 		ShootRate = 200

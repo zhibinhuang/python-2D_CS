@@ -50,7 +50,7 @@ def AI(ENEMYS,PLAYER,BULLETS,LEVEL,SOURCE):
 					fire,move=0,Config.AI[LEVEL][2]
 				if i<fire:
 					bot.action=1
-				elif i<move:
+				elif i<move and abs(PLAYER.rect.x-bot.rect.x)>80:
 					bot.action=2
 				else:
 					bot.action=0
@@ -197,7 +197,7 @@ def gameStart(arg):
 		else:
 			PLAYER.defense_actioning = False
 		#新增敵人
-		if (random.randint(0,100)<3 and len(ENEMYS)<15):
+		if (random.randint(0,100)<2 and len(ENEMYS)<15 and PLAYER.rect.x>0):
 			pos,weapon=random.choice([-600,800]),random.choice(range(0,LEVEL+1))
 			enemy = Enemy(PLAYER.rect.x+pos,Config.BlockFloat-12,Config.WEAPON[weapon])
 			ENEMYS.append(enemy)
