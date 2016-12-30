@@ -9,7 +9,7 @@ def readGameList():
 		with open(path+"/"+f) as json_data:
 			data.append(json.load(json_data))
 	return data
-def AI(ENEMYS,PLAYER,BULLETS,LEVEL,SOURCE):
+def AI(ENEMYS,PLAYER,BULLETS,SOURCE):
 	for bot in ENEMYS:
 		if  PLAYER.rect.x-bot.rect.x > 800:
 			ENEMYS.remove(bot)
@@ -35,7 +35,7 @@ def AI(ENEMYS,PLAYER,BULLETS,LEVEL,SOURCE):
 				else:
 					bot.Reload()
 			elif bot.action==2:
-				bot.lastAction+=2
+				bot.lastAction+=1
 				if(bot.direction):
 					bot.MoveLeft()
 				else:
@@ -45,9 +45,9 @@ def AI(ENEMYS,PLAYER,BULLETS,LEVEL,SOURCE):
 				i=random.randint(0,100)
 				fire,move=0,0
 				if abs(PLAYER.rect.x-bot.rect.x)<=bot.weapon.LimitRange:
-					fire,move=Config.AI[LEVEL][0],Config.AI[LEVEL][1]
+					fire,move=20,60
 				else:
-					fire,move=0,Config.AI[LEVEL][2]
+					fire,move=0,60
 				if i<fire:
 					bot.action=1
 				elif i<move and abs(PLAYER.rect.x-bot.rect.x)>80:
@@ -55,6 +55,7 @@ def AI(ENEMYS,PLAYER,BULLETS,LEVEL,SOURCE):
 				else:
 					bot.action=0
 	return SOURCE
+	
 def getHightRank():
 	file = open(PATH+"/rank.txt", 'r', encoding='UTF-8')
 	HightRank = int(file.readline())
@@ -130,14 +131,15 @@ def gameMenu():
 		pygame.display.update()
 		fpsClock.tick(Config.FPS)
 def gameStart(arg):
+	print(arg)
 	BlockArray = []
 	SOURCE,TIME,DISTANCE = 0,pygame.time.get_ticks()//1000,0
-	LEVEL=0
+	LEVEL=2#arg0~2
 	ENEMYS = []
 	PAUSE = False
 	pygame.mixer.music.load(arg["BGM"])
 	pygame.mixer.music.play(-1,0.0)
-	PLAYER = Player(0,arg["BlockFloat"]-12,Config.WEAPON[2])
+	PLAYER = Player(0,arg["BlockFloat"]-12,Config.WEAPON[int(arg["Weapon"])])
 	BlackGroundImage = pygame.image.load(arg["BackGroundImage"])
 	BG_rect = BlackGroundImage.get_rect()
 	entities = pygame.sprite.Group()
@@ -197,13 +199,14 @@ def gameStart(arg):
 		else:
 			PLAYER.defense_actioning = False
 		#新增敵人
+
 		if (random.randint(0,100)<2 and len(ENEMYS)<15 and PLAYER.rect.x>0):
 			pos,weapon=random.choice([-600,800]),random.choice(range(0,LEVEL+1))
 			enemy = Enemy(PLAYER.rect.x+pos,Config.BlockFloat-12,Config.WEAPON[weapon])
 			ENEMYS.append(enemy)
 		#AI
-		SOURCE=AI(ENEMYS,PLAYER,BULLETS,LEVEL,SOURCE)
-
+		SOURCE=AI(ENEMYS,PLAYER,BULLETS,SOURCE)
+	
 		camera.update(PLAYER)
 		for e in entities:
 			e.update(BULLETS)
@@ -223,7 +226,7 @@ def gameStart(arg):
 			DISPLAYSURF.blit(pygame.image.load(Config.PATH+PLAYER.weapon.Ammo), (200 + 9*i, 550))
 	#分數描繪
 		PAST=pygame.time.get_ticks()//1000-TIME#經過時間
-		if(PLAYER.rect.x//32>DISTANCE):DISTANCE=PLAYER.rect.x//32
+		if(PLAYER.rect.x//32>DISTANCE):DISTANCE=PLAYER.rect.x//32	
 		SourceText = pygame.font.Font(Config.Font,30)
 		SourceSurf, SourceRect = text_objects("擊殺人數:"+str(SOURCE), SourceText,Config.WHITE)
 		SourceRect.topleft = (0,550)
@@ -233,7 +236,7 @@ def gameStart(arg):
 		DISTANCEText = pygame.font.Font(Config.Font,20)
 		DISTANCESurf, DISTANCERect = text_objects("距離"+str(DISTANCE)+'M', DISTANCEText,Config.WHITE)
 		DISTANCERect.topleft = (700,570)
-		
+
 		DISPLAYSURF.blit(SourceSurf, SourceRect)
 		DISPLAYSURF.blit(TIMESurf, TIMERect)
 		DISPLAYSURF.blit(DISTANCESurf, DISTANCERect)

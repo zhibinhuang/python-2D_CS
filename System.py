@@ -103,7 +103,7 @@ class Camera(object):
 		l, t, _, _ = -l+self.sw/2, -t+self.sh/2, w, h
 		if(self.rect.x<0):tmp=self.rect.x
 		else:tmp=0
-		l = min(tmp,l)                           # stop scrolling at the left edge
+		l = min(tmp,l)                            # stop scrolling at the left edge
 		l = max(-(self.rect.width-self.sw), l)   # stop scrolling at the right edge
 		t = max(-(self.rect.height-self.sh), t) # stop scrolling at the bottom
 		t = min(0, t) 
